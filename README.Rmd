@@ -1,0 +1,18 @@
+---
+title: "README"
+author: "Elsabell"
+date: "26-8-2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+The assignment in the course "Getting and Cleaning Data" provides raw data. This data is transformed towards a final data set. This content of this final data set is described in the assignment.
+
+The file run_analysis.R contains the code used to obtain the final data from the raw data. 
+
+In the file CodeBook.Rmd is described how the final data is obtained from the raw data. The code used in run_analysis.R is shown and accompanied by explanation. Also more information about the data and variables is available. 
+
+

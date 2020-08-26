@@ -1,0 +1,117 @@
+---
+title: "Codebook run analysis"
+author: "Elsabell"
+date: "26-8-2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+The assignment in the course "Getting and Cleaning Data" provides raw data. Also the wanted final data set is described. In this document the steps followed to obtain this final data set from the raw data are outlined. First the raw data and variables are described. Then the code to obtain the final data set is shown and explained. And at last the final data and variables are described.
+
+## Raw data and variables
+
+The provided data is called "UCI HAR Dataset". The data contains information about train and test data. The data consists of measurements performed by the Samsung Galaxy S II about 30 people while doing 6 different types of activities. The data comes with a README file, which is advised to be consulted for extra information. The files that are provided and used for analysis are:
+
+* X_test / X_train : measurements (each row is a different observation) 
+* y_test / y_train : activity performed during the measurement
+* subject_test / subject_train : person that the measurement belongs to
+* activity_labels: contains textual labels matching the numerical data in y_test / y_train
+* features: contains the names of the measured variables, the second column of features shows the column names of X_test / X_train. The file features_info contains more information about the features.
+
+To summarize: the raw test data is available in X_test/y_test/subject_test, and the raw train data is available in X_train/y_train/subject_train. The variables are available in features, and explanation about these variables in features_info.
+
+## Code
+
+The dplyr package is used in this code, so start with loading this package.
+
+```{}
+library(dplyr)
+```
+
+Read the files in R using read.table().
+
+```{}
+X_test <- read.table("UCI HAR Dataset/test/X_test.txt") 
+y_test <- read.table("UCI HAR Dataset/test/y_test.txt") 
+subject_test <- read.table("UCI HAR Dataset/test/subject_test.txt") 
+
+X_train <- read.table("UCI HAR Dataset/train/X_train.txt") 
+y_train <- read.table("UCI HAR Dataset/train/y_train.txt") 
+subject_train <- read.table("UCI HAR Dataset/train/subject_train.txt") 
+
+activity_labels <- read.table("UCI HAR Dataset/activity_labels.txt") 
+features <- read.table("UCI HAR Dataset/features.txt") 
+```
+
+To form a tidy data set the information in these documents can be combined.
+
+First the column names of X_test and X_train are added. 
+
+```{}
+colnames(X_test) <- features[,2]
+colnames(X_train) <- features[,2]
+```
+
+The test data (X_test/y_test/subject_test) can be combined to form one data set. This is done by column binding the different data sets to create test_data. The test_data data set contains subject_test in the first column, y_test in the second column and the X_test data in columns 3 up to and including 563. Columnnames are to be added for the first two columns.
+
+```{try}
+test_data <- cbind(subject_test, y_test, X_test)
+colnames(test_data)[1] <- "subject"
+colnames(test_data)[2] <- "activity"
+```
+
+The train data (X_train/y_train/subject_train) can be combined to form one data set. This is done by column binding the different data sets to create train_data. The train_data data set contains subject_train in the first column, y_train in the second column and the X_train data in columns 3 up to and including 563. Columnnames are to be added for the first two columns.
+
+```{}
+train_data <- cbind(subject_train, y_train, X_train)
+colnames(train_data)[1] <- "subject"
+colnames(train_data)[2] <- "activity"
+```
+
+To get the complete data set test_data and train_data are row binded.
+
+```{}
+data <- rbind(test_data, train_data)
+```
+
+Because only the measurements about the mean and standard deviation are wanted, these columns are selected. Also the first two columns (subject and activity) have to remain.
+
+```{}
+data <- data[, grepl("subject|activity|mean\\(\\)|std\\(\\)", names(data))]
+```
+
+Information from the file activity labels can be used to add explanation instead of numbers into the activity column.
+
+```{}
+data <- mutate(data, activity = 
+        case_when(activity == activity_labels[1,1] ~ activity_labels[1,2],
+                activity == activity_labels[2,1] ~ activity_labels[2,2],
+                activity == activity_labels[3,1] ~ activity_labels[3,2],
+                activity == activity_labels[4,1] ~ activity_labels[4,2],
+                activity == activity_labels[5,1] ~ activity_labels[5,2],
+                activity == activity_labels[6,1] ~ activity_labels[6,2]))
+```
+
+To find the average per activity per subject of all measured variables in this data set the data is first grouped by these variables and consequently the average is calculated.
+
+```{}
+data_grouped <- group_by(data, subject, activity)
+data_grouped_mean <- summarise_at(data_grouped, 
+                vars("tBodyAcc-mean()-X":"fBodyBodyGyroJerkMag-std()"), mean)                         
+```
+
+At last the column names of the variable columns are changed so it is clear that means are shown.
+
+```{}
+colnames(data_grouped_mean)[3:68] <- paste("Mean", 
+                colnames(data_grouped_mean)[3:68], sep = ":")
+```
+
+## Final data and variables
+
+The final data set is called data_grouped_mean. This data set shows the mean of all variables from the original data set that contain information about the mean() or std(). This is a total of 66 variables. The mean of these variables is calculated by grouping observations belonging to the same subject and same activity.  
