@@ -59,3 +59,6 @@ data_grouped_mean <- summarise_at(data_grouped,
 # change the column names of variable columns so it is clear that means are shown
 colnames(data_grouped_mean)[3:68] <- paste("Mean", 
                 colnames(data_grouped_mean)[3:68], sep = ":")
+
+# output txt file
+write.table(data_grouped_mean, file = "data_grouped_mean.txt", row.name=FALSE)
